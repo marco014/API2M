@@ -20,31 +20,36 @@ class ProductControllers {
         private deleteProductCU: DeleteProductCU
     ){}
 
-    async create( req: Request, res: Response, next: NextFunction): Promise<void | any> {
+    async create(req: Request, res: Response, next: NextFunction): Promise<void | any> {
+        console.log('Datos del formulario:', req.body);
+        console.log('Archivo recibido:', req.file);
+
         try {
             const productPayLoad = req.body;
             const file = req.file;
             
-            if ( !file ) {
-                return res.status(400).send('No se puedo subir ningun archivo');
+            if (!file) {
+                console.error('No se pudo subir ningún archivo');
+                return res.status(400).send('No se pudo subir ningún archivo');
             }
 
-            //Guarda el archivo localmente
+            // Guarda el archivo localmente
             const localFilePath = await localFileStorage.uploadFile(file);
 
-            //Sube la imagen a S3
+            // Sube la imagen a S3
             const s3FilePath = await s3FileStorage.uploadFile(file);
 
-            const productData = { ...productPayLoad, image: localFilePath, imge_s3: s3FilePath };
+            const productData = { ...productPayLoad, image: localFilePath, image_s3: s3FilePath };
             const product = await this.createProductCU.execute(productData);
 
             res.status(201).json(product);
         
-        } catch ( error ) {
-            next( error );
+        } catch (error) {
+            console.error('Error al crear el producto:', error);
+            next(error);
         } finally {
-            if ( req.file ) {
-                console.log('Producto creada con exito');
+            if (req.file) {
+                console.log('Producto creado con éxito');
             }
         }
     }
